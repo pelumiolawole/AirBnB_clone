@@ -1,9 +1,6 @@
 # AirBnB_clone
 
-<p align="center">
-  <a href="" rel="noopener">
- <img width=480px height=480px src="https://gifer.com/embed/94Vr" alt="Airbnb Clone Project Logo"></a>
-</p>
+<img src="https://gifer.com/embed/94Vr.gif">
 
 <h3 align="center">Airbnb Clone</h3>
 
