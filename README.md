@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="" rel="noopener">
- <img width=2454px height=1036px src="https://s3.amazonaws.com/alx-intranet.hbtn.io/uploads/medias/2018/6/65f4a1dd9c51265f49d0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIARDDGGGOUSBVO6H7D%2F20220803%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220803T025408Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=2909462d4815b02adf650721b02f932f2a962527b4156fa2ed1871b199c0829b" alt="AirBnB Clone Project logo"></a>
+ <iframe src="https://gifer.com/embed/94Vr" width=480 height=480.000 frameBorder="0" allowFullScreen></iframe><p><a href="https://gifer.com">via GIFER</a></p>
 </p>
 
 <h3 align="center">Airbnb Clone</h3>
