@@ -1,6 +1,9 @@
 # AirBnB_clone
 
- <iframe src="https://gifer.com/embed/94Vr" width=480 height=480.000 frameBorder="0" allowFullScreen></iframe><p><a href="https://gifer.com">via GIFER</a></p>
+<p align="center">
+  <a href="" rel="noopener">
+ <img width=1280px height=1280px src="https://i.gifer.com/94Vr.gif" alt="Project logo"></a>
+</p>
 
 <h3 align="center">Airbnb Clone</h3>
 
