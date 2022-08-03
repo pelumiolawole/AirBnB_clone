@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="" rel="noopener">
- <img width=1280px height=1280px src="https://i.gifer.com/94Vr.gif" alt="Project logo"></a>
+ <img width=480px height=480px src="https://gifer.com/embed/94Vr" alt="Airbnb Clone Project Logo"></a>
 </p>
 
 <h3 align="center">Airbnb Clone</h3>
