@@ -3,6 +3,7 @@
 """
 from datetime import datetime
 import uuid
+import models
 
 
 class BaseModel():
@@ -18,7 +19,7 @@ class BaseModel():
             Return:
         """
         # check if kwargs is empty
-        if (len(kwargs) < 0):
+        if (len(kwargs) > 0):
             # loop through to get the keys and set the values
             for key, value in kwargs.item():
                 if key != '__class__':
@@ -29,6 +30,7 @@ class BaseModel():
             self.id = str(uuid.uuid4())
             self.created_at = datetime.now()
             self.updated_at = datetime.now()
+            models.storage.new(self)
 
     def __str__(self):
         """ String represention
@@ -40,6 +42,7 @@ class BaseModel():
         """ updates the date and time when an instance gets modified
         """
         self.updated_at = datetime.now()
+        models.storage.save()
 
     def to_dict(self):
         """ returns a dict with all keys/values of the instance
