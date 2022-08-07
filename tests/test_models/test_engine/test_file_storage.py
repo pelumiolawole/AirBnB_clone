@@ -1,75 +1,108 @@
 #!/usr/bin/python3
-"""
-file_storage Tests
-"""
-import unittest
-import pycodestyle
+''' module for file_storage tests '''
+from unittest import TestCase
+import json
+import re
+from uuid import UUID, uuid4
+from datetime import datetime
+from time import sleep
 import os
-from models import storage
-from models.base_model import BaseModel
+
+from models import storage, BaseModel, FileStorage
 
 
-class test_file_storage(unittest.TestCase):
-    """Tests for file_storage.py"""
+class TestFileStorage(TestCase):
+    ''' tests FileStorage class '''
+    def test_5(self):
+        ''' tests task 4 '''
+        FS_dict = FileStorage.__dict__
+        FS__path = '_FileStorage__file_path'
+        FS__objs = '_FileStorage__objects'
+        FS_path = FS_dict[FS__path]
+        FS_objs = FS_dict[FS__objs]
 
-    @classmethod
-    def setUpClass(cls):
-        # self.BaseModel._BaseModel__nb_objects = 0
-        cls.b1 = BaseModel()
-        cls.b2 = BaseModel()
+        # valid types
+        self.assertTrue(type(FS_path) is str and FS_path)
+        self.assertTrue(type(FS_objs) is dict)
 
-    @classmethod
-    def tearDownClass(cls):
-        del cls.b1
-        del cls.b2
-        os.remove("file.json")
+        # same object returned
+        self.assertTrue(getattr(storage, FS__path))
+        self.assertTrue(getattr(storage, FS__objs) is storage.all())
 
-    def test_pep8_self(self):
-        """
-        Test that checks pycodestyle
-        """
-        syntax = pycodestyle.StyleGuide(quit=True)
-        check = syntax.check_files(['tests/test_models/test_file_storage.py'])
-        self.assertEqual(
-            check.total_errors, 0,
-            "Pycodestyle errors found in test_file_storage.py"
-        )
+        FS_objs.clear()
 
-    def test_pep8_engine_init(self):
-        """
-        Test that checks PEP8 base_model.py
-        """
-        syntax = pycodestyle.StyleGuide(quit=True)
-        check = syntax.check_files(['models/engine/__init__.py'])
-        self.assertEqual(
-            check.total_errors, 0,
-            "Pycodestyle errors found in models/engine/__init__.py"
-        )
+        # object registration and persistent __objects dict
+        oobjs = storage.all()
+        oobjs_cp = oobjs.copy()
+        obj = BaseModel()
+        storage.new(obj)
+        self.assertTrue(oobjs is storage.all())
+        self.assertEqual(len(oobjs.keys()), 1)
+        self.assertTrue(set(storage.all().keys())
+                        .difference(set(oobjs_cp.keys())) ==
+                        {'BaseModel.{}'.format(obj.id)})
 
-    def test_pep8_file_storage(self):
-        """
-        Test that checks PEP8 base_model.py
-        """
-        syntax = pycodestyle.StyleGuide(quit=True)
-        check = syntax.check_files(['models/engine/file_storage.py'])
-        self.assertEqual(
-            check.total_errors, 0,
-            "Pycodestyle errors found in file_storage.py"
-        )
+        oobjs_cp = oobjs.copy()
+        # storage.new(obj)
+        self.assertTrue(oobjs is storage.all())
+        self.assertEqual(oobjs, oobjs_cp)
 
-    def test_doc(self):
-        """test for documentation"""
-        self.assertTrue(len(storage.__doc__) > 0)
+        obj = BaseModel()
+        storage.new(obj)
+        self.assertEqual(len(oobjs.keys()), 2)
 
-    def test_all(self):
-        """check all()"""
-        self.assertEqual(type(storage.all()), dict)
+        # check serialization
+        oobjs_cp = oobjs.copy()
+        storage.save()
+        self.assertTrue(os.path.isfile(FS_path))
+        with open(FS_path, 'r') as file:
+            js_objs = json.load(file)
+            self.assertTrue(type(js_objs) is dict)
+            self.assertEqual(len(js_objs.keys()), 2)
+            self.assertTrue(all(v in oobjs.keys() for v in js_objs.keys()))
+        storage.all().clear()
+        storage.reload()
 
-    def test_save(self):
-        """check json"""
-        self.b1.save()
-        self.assertTrue(os.path.isfile("file.json"))
+        # check deserialization
+        for k, v in oobjs_cp.items():
+            oobjs_cp[k] = v.to_dict()
+        oobjs_cp2 = storage.all().copy()
+        for k, v in oobjs_cp2.items():
+            oobjs_cp2[k] = v.to_dict()
+        self.assertEqual(oobjs_cp, oobjs_cp2)
 
+        # ### check no deserialization for absent file
+        oobjs_cp = storage.all().copy()
+        os.remove(FS_path)
+        storage.reload()
+        self.assertEqual(oobjs_cp, storage.all())
 
-if __name__ == '__main__':
-    unittest.main()
+        # automatic registration for instances created with no args
+        obj = BaseModel()
+        kid = 'BaseModel.{}'.format(obj.id)
+        self.assertTrue(kid in storage.all() and storage.all()[kid] is obj)
+        sleep(.01)
+        now = datetime.utcnow()
+        obj.updated_at = now
+        obj.save()
+        storage.all().clear()
+        storage.reload()
+        oobjs = storage.all()
+        storage.reload()  # insignificant reload
+        oobjs2 = storage.all()
+
+        # same deserialization
+        self.assertEqual(obj.to_dict(), storage.all()[kid].to_dict())
+        self.assertFalse(obj is storage.all()[kid].to_dict())
+
+        # args should not be counted towards manual instantiation
+        obj = BaseModel(1, 2, 3)
+        kid = 'BaseModel.{}'.format(obj.id)
+        self.assertTrue(kid in storage.all() and storage.all()[kid] is obj)
+
+        # instances constructed with kwargs are not registered
+        obj = BaseModel(id=str(uuid4()), created_at=now.isoformat(),
+                        updated_at=now.isoformat())
+        kid = 'BaseModel.{}'.format(obj.id)
+        self.assertFalse(kid in storage.all())
+        self.assertFalse(obj in storage.all().values())

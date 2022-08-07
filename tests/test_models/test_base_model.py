@@ -1,138 +1,104 @@
 #!/usr/bin/python3
-"""
-Base Model & storage Tests
-"""
-import unittest
-import pycodestyle
-import os
+''' module for base_model tests '''
+from unittest import TestCase
+import json
+import re
+from uuid import UUID, uuid4
 from datetime import datetime
+from time import sleep
 from models.base_model import BaseModel
 
 
-class test_base_model(unittest.TestCase):
-    """Tests for base_model.py"""
+class TestBaseModel(TestCase):
+    ''' tests BaseModel class '''
+    def test_3(self):
+        ''' task 0 tests '''
+        obj = BaseModel()
 
-    @classmethod
-    def setUpClass(cls):
-        cls.b1 = BaseModel()
-        cls.b2 = BaseModel()
+        # id format and uniqueness
+        self.assertTrue(type(getattr(obj, 'id', None) is str) and
+                        UUID(obj.id))
+        self.assertNotEqual(BaseModel().id, obj.id)
+        self.assertNotEqual(BaseModel().id, BaseModel().id)
+        self.assertNotEqual(BaseModel().id, BaseModel().id)
 
-    @classmethod
-    def tearDownClass(cls):
-        del cls.b1
-        del cls.b2
+        # created_at and updated_at types
+        self.assertTrue(type(obj.created_at) is datetime)
+        self.assertTrue(type(obj.updated_at) is datetime)
 
-    def test_pep8_base_model(self):
-        """
-        Test that checks PEP8 base_model.py
-        """
-        syntax = pycodestyle.StyleGuide(quit=True)
-        check = syntax.check_files(['models/base_model.py'])
-        self.assertEqual(
-            check.total_errors, 0,
-            "Pycodestyle errors found in base_model.py"
-        )
+        # string representation
+        self.assertEqual(str(obj), '[{}] ({}) {}'.format(
+            'BaseModel', obj.id, obj.__dict__))
 
-    def test_pep8_self(self):
-        """
-        Test that checks PEP8 test_base_model.py
-        """
-        syntax = pycodestyle.StyleGuide(quit=True)
-        check = syntax.check_files(['tests/test_models/test_base_model.py'])
-        self.assertEqual(
-            check.total_errors, 0,
-            "Pycodestyle errors found in test_base.py"
-        )
+        # time updates
+        old_ctm = obj.created_at
+        old_utm = obj.updated_at
+        sleep(0.01)
+        obj.save()
+        self.assertEqual(old_ctm, obj.created_at)
+        self.assertNotEqual(old_utm, obj.updated_at)
 
-    def test_pep8_base_model_init(self):
-        """
-        Test that checks PEP8 base_model.py
-        """
-        syntax = pycodestyle.StyleGuide(quit=True)
-        check = syntax.check_files(['models/__init__.py'])
-        self.assertEqual(
-            check.total_errors, 0,
-            "Pycodestyle errors found in models/__init__.py"
-        )
+        old_ctm = obj.created_at
+        old_utm = obj.updated_at
+        sleep(0.01)
+        obj.save()
+        self.assertEqual(old_ctm, obj.created_at)
+        self.assertNotEqual(old_utm, obj.updated_at)
 
-    def test_pep8_test_init(self):
-        """
-        Test that checks PEP8 base_model.py
-        """
-        syntax = pycodestyle.StyleGuide(quit=True)
-        check = syntax.check_files(['tests/test_models/__init__.py'])
-        self.assertEqual(
-            check.total_errors, 0,
-            "Pycodestyle errors found in tests/__init__.py"
-        )
+        self.assertEqual(obj.to_dict(),
+                         {'__class__': 'BaseModel', 'id': obj.id,
+                          'created_at': obj.created_at.isoformat(),
+                          'updated_at': obj.updated_at.isoformat()})
 
-    def test_pep8_console(self):
-        """
-        Test that checks PEP8 base_model.py
-        """
-        syntax = pycodestyle.StyleGuide(quit=True)
-        check = syntax.check_files(['console.py'])
-        self.assertEqual(
-            check.total_errors, 0,
-            "Pycodestyle errors found in console.py"
-        )
+    def test_4(self):
+        ''' task 4 tests '''
+        # args ignorance
+        obj = BaseModel(1, 2, 3, 'kk')
+        self.assertTrue(type(getattr(obj, 'id', None) is str) and
+                        UUID(obj.id))
 
-    def test_doc(self):
-        """test for documentation"""
-        self.assertTrue(len(BaseModel.__doc__) > 0)
+        now = datetime.utcnow()
+        obj_dict = {'id': str(uuid4()), 'created_at': now.isoformat(),
+                    'updated_at': now.isoformat(), '__class__': 'BaseModel'}
+        # kwargs parsing
+        obj = BaseModel(**obj_dict)
+        self.assertEqual(obj.id, obj_dict['id'])
+        # datetime parsing
+        self.assertEqual(obj.created_at, now)
+        self.assertEqual(obj.updated_at, now)
+        # __class__ should not be added as an attribute
+        self.assertFalse('__class__' in obj.__dict__)
 
-    """================Task 3================"""
+        # same objects creation
+        self.assertEqual(obj.to_dict(), BaseModel(**obj_dict).to_dict())
+        self.assertEqual(str(obj), str(BaseModel(**obj_dict)))
 
-    def test_id(self):
-        """check id"""
-        self.assertEqual(type(self.b1.id), str)
+        # no __class__ dependency
+        del obj_dict['__class__']
+        BaseModel(**obj_dict)  # no execption raised
 
-    def test_id_uniq(self):
-        """check uniq id"""
-        self.assertTrue(self.b1.id != self.b2.id)
+        ##
+        ##
+        ##
+        # normal creation in kwargs absence
+        obj = BaseModel()
+        self.assertTrue(type(getattr(obj, 'id', None) is str) and
+                        UUID(obj.id))
+        self.assertNotEqual(BaseModel().id, obj.id)
+        self.assertNotEqual(BaseModel().id, BaseModel().id)
+        self.assertNotEqual(BaseModel().id, BaseModel().id)
 
-    def test_name(self):
-        """check name"""
-        self.b1.name = "name test"
-        self.assertEqual(self.b1.name, "name test")
+        # time updates
+        old_ctm = obj.created_at
+        old_utm = obj.updated_at
+        sleep(0.01)
+        obj.save()
+        self.assertEqual(old_ctm, obj.created_at)
+        self.assertNotEqual(old_utm, obj.updated_at)
 
-    def test_my_number(self):
-        """check my_number"""
-        self.b1.my_number = 89
-        self.assertEqual(self.b1.my_number, 89)
-
-    def test_created_at_type(self):
-        """check created_a type"""
-        self.assertEqual(type(self.b1.created_at), datetime)
-
-    def test_update_at_type(self):
-        """check update_at type"""
-        self.assertEqual(type(self.b1.updated_at), datetime)
-
-    def test_str(self):
-        """check __str__"""
-        self.assertTrue(self.b1.__str__)
-
-    def test_to_dict(self):
-        """check to_dict"""
-        self.assertEqual(type(self.b1.to_dict()), dict)
-
-    def test_str(self):
-        """check str"""
-        self.assertTrue(self.b1.__str__)
-
-    """================Task 4================"""
-
-    def test_dict_rep(self):
-        """re-create an instance with dictionary representation"""
-        json = self.b1.to_dict()
-        new = BaseModel(**json)
-        self.assertCountEqual(self.b1.id, new.id)
-
-    def test_dict_rep_empty(self):
-        """re-create an instance with empty dictionary"""
-        self.assertTrue(BaseModel({}))
-
-
-if __name__ == '__main__':
-    unittest.main()
+        old_ctm = obj.created_at
+        old_utm = obj.updated_at
+        sleep(0.01)
+        obj.save()
+        self.assertEqual(old_ctm, obj.created_at)
+        self.assertNotEqual(old_utm, obj.updated_at)
