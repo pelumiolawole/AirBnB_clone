@@ -2,6 +2,8 @@
 """ file storage module
 """
 import json
+import os
+from models.base_model import BaseModel
 
 
 class FileStorage():
@@ -30,23 +32,15 @@ class FileStorage():
         temp = FileStorage.__objects
         for key, value in temp.items():
             new_obj[key] = value.to_dict()
-        with open(FileStorage.__file_path, 'w', encoding='utf-8') as my_file:
+        with open(FileStorage.__file_path, 'w+', encoding='utf-8') as my_file:
             string_data = json.dumps(new_obj, indent=2)
             my_file.write(string_data)
 
     def reload(self):
-        """ deserializes JSON file to object
-        """
-        from models.base_model import BaseModel
-        filename = FileStorage.__file_path
-
-        try:
-            with open(filename, 'r', encoding='utf-8') as file:
-                string_data = file.read()
-                dict_data = json.loads(string_data)
-            for (key, value) in dict_data.items():
-                if key not in FileStorage.__objects.keys():
-                    FileStorage.__objects[key] = BaseModel(dict_data)
-            
-        except IOError:
-            pass
+        """Deserializes __file_path to __objects"""
+        if os.path.exists(FileStorage.__file_path):
+            my_dict = {}
+            with open(FileStorage.__file_path) as my_file:
+                my_dict = json.load(my_file)
+            for k, v in my_dict.items():
+                FileStorage.__objects[k] = eval(v['__class__'])(**v)
